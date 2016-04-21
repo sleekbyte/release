@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+# Usage: script/release
+# Release a new version.
+
+set -euo pipefail
+
+
+read -rp "Enter new version (X.Y.Z): " VERSION
+echo "New version: ${VERSION}"
+BRIEF_VERSION=${VERSION//./}
+echo "Brief version: ${BRIEF_VERSION}"
+echo
+
+read -rp "Enter current milestone (1, 2,...): " MILESTONE
+echo "Current milestone: ${MILESTONE}"
+echo
+
+read -rp "Enter your initials (aa): " INITIALS
+echo "Your initials: ${INITIALS}"
+echo
+
+ISSUE=$(ghi open -m "Release v${VERSION}" --claim -M "${MILESTONE}" -L task | head -n 1 | cut -d : -f 1 | cut -d '#' -f 2)
+# read -rp "Enter issue number (1, 2,...): " ISSUE
+echo "Issue number: ${ISSUE}"
+echo
+
+
+set -v
+git checkout master && git pull
+
+git checkout -B "${INITIALS}"-"${ISSUE}"-v"${BRIEF_VERSION}"-release
+
+echo "${VERSION}" | ./gradlew setVersion
+./gradlew clean build
+
+git add .
+git commit -m "Bump version number to v${VERSION}"
+git push -u origin "${INITIALS}"-"${ISSUE}"-v"${BRIEF_VERSION}"-release
+set +v
+
+
+PULL=$(printf "#%s: Bump version number to v%s\n\nResolves #%s.\n" "${ISSUE}" "${VERSION}" "${ISSUE}" | hub pull-request -F - | cut -d / -f 7)
+# read -rp "Enter pull request number (1, 2,...): " PULL
+echo "Pull Request number: ${PULL}"
+echo
+
+ghi edit "${PULL}" -M "${MILESTONE}" -L task -L 'in progress'
+
+TIMER=60
+until [ "$(hub ci-status)" == "success" ]; do
+  echo "PR build in progress, checking again in ${TIMER}s"
+  sleep "${TIMER}"
+done
+echo "PR build successful!"
+
+set -v
+git checkout master
+
+git merge --no-ff -m "Merge pull request #${PULL} from sleekbyte/${INITIALS}-${ISSUE}-v${BRIEF_VERSION}-release" -m "#${ISSUE}: Bump version number to v${VERSION}" "${INITIALS}"-"${ISSUE}"-v"${BRIEF_VERSION}"-release
+git tag v"${VERSION}"
+git push --tags origin master
+git push origin :"${INITIALS}"-"${ISSUE}"-v"${BRIEF_VERSION}"-release
+set +v
+
+echo
+echo "Please rename the release to:"
+echo "Tailor ${VERSION}"
+echo
+
+echo "Use the following template for the changelog:"
+printf "This release...\n\n### Changes\n\n* #issue: Explanation"
+echo
+
+open https://github.com/sleekbyte/tailor/releases/tag/v"${VERSION}"
+
+echo "Remember to push the new install/uninstall scripts to the website:"
+echo
+
+echo "cp script/install* script/uninstall* ../tailor-sh/"
+echo "cd ../tailor-sh/"
+echo "git add ."
+echo "git commit -m \"Update install scripts to v${VERSION}\""
+echo "git push"
