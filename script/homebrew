@@ -15,39 +15,8 @@ read -rp "Enter new SHA256: " SHA256
 echo "New SHA256: ${SHA256}"
 echo
 
-set -v
-git fetch upstream
-git checkout master
-git merge upstream/master
-git push
-git checkout -B tailor-v"${BRIEF_VERSION}"
-set +v
-
-sed "s/v[0-9]\{1,\}\.[0-9]\{1,\}\.[0-9]\{1,\}/v${VERSION}/g" Formula/tailor.rb > Formula/tailor.rb.new
-mv Formula/tailor.rb.new Formula/tailor.rb
-
-sed "s/tailor-[0-9]\{1,\}\.[0-9]\{1,\}\.[0-9]\{1,\}/tailor-${VERSION}/g" Formula/tailor.rb > Formula/tailor.rb.new
-mv Formula/tailor.rb.new Formula/tailor.rb
-
-sed "s/[0-9a-f]\{64\}/${SHA256}/g" Formula/tailor.rb > Formula/tailor.rb.new
-mv Formula/tailor.rb.new Formula/tailor.rb
+export HOMEBREW_DEVELOPER=1
 
 set -v
-git diff
-git add .
+brew bump-formula-pr --dry-run --url=https://github.com/sleekbyte/tailor/releases/download/v"${VERSION}"/tailor-"${VERSION}".tar --sha256="${SHA256}" tailor
 set +v
-
-read -rn1 -p "Press any key to commit..."
-
-set -v
-git commit -m "tailor ${VERSION}"
-set +v
-
-git show
-read -rn1 -p "Press any key to push..."
-git push -u origin tailor-v"${BRIEF_VERSION}"
-
-echo
-echo "Pull Request description:"
-echo "Bump version to ${VERSION}."
-open https://github.com/Homebrew/homebrew-core/compare/master...sleekbyte:tailor-v"${BRIEF_VERSION}"
