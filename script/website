@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# Usage: script/release
+# Release a new version.
+
+set -euo pipefail
+
+
+read -rp "Enter new version (X.Y.Z): " VERSION
+echo "New version: ${VERSION}"
+BRIEF_VERSION=${VERSION//./}
+echo "Brief version: ${BRIEF_VERSION}"
+echo
+
+set -v
+cp script/install* script/uninstall* ../tailor-sh/
+cd ../tailor-sh/
+git add .
+git commit -m "Update install scripts to v${VERSION}"
+git push
+set +v
