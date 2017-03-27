@@ -73,11 +73,18 @@ echo
 
 open https://github.com/sleekbyte/tailor/releases/tag/v"${VERSION}"
 
-echo "Remember to push the new install/uninstall scripts to the website:"
-echo
+echo "Remember to push the new install/uninstall scripts to the website by running ./v${UPDATE_WEBSITE_SCRIPT}"
+local UPDATE_WEBSITE_SCRIPT="update-website.sh"
+if [ -f "$UPDATE_WEBSITE_SCRIPT" ] ; then
+    rm "$file"
+fi
 
-echo "cp script/install* script/uninstall* ../tailor-sh/"
-echo "cd ../tailor-sh/"
-echo "git add ."
-echo "git commit -m \"Update install scripts to v${VERSION}\""
-echo "git push"
+touch "$UPDATE_WEBSITE_SCRIPT"
+
+echo "cp script/install* script/uninstall* ../tailor-sh/" >> "${UPDATE_WEBSITE_SCRIPT}"
+echo "cd ../tailor-sh/" >> "${UPDATE_WEBSITE_SCRIPT}"
+echo "git add ." >> "${UPDATE_WEBSITE_SCRIPT}"
+echo "git commit -m \"Update install scripts to v${VERSION}\"" >> "${UPDATE_WEBSITE_SCRIPT}"
+echo "git push" >> "${UPDATE_WEBSITE_SCRIPT}"
+echo "cd ../tailor/" >> "${UPDATE_WEBSITE_SCRIPT}"
+echo "rm ${UPDATE_WEBSITE_SCRIPT}"
