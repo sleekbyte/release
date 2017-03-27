@@ -15,8 +15,6 @@ read -rp "Enter new SHA256: " SHA256
 echo "New SHA256: ${SHA256}"
 echo
 
-export HOMEBREW_DEVELOPER=1
-
 set -v
-brew bump-formula-pr --dry-run --url=https://github.com/sleekbyte/tailor/releases/download/v"${VERSION}"/tailor-"${VERSION}".tar --sha256="${SHA256}" tailor
+brew bump-formula-pr --url=https://github.com/sleekbyte/tailor/releases/download/v"${VERSION}"/tailor-"${VERSION}".tar --sha256="${SHA256}" tailor
 set +v
